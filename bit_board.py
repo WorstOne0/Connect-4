@@ -11,9 +11,13 @@ class Board:
     rows = 0
     columns = 0
 
+    # Separate Board - One for Red, One for Yellow
     bitBoard = [None, None]
+    # Store where the last avaliable column position is in that row
     rowsAvaliable = [0, 7, 14, 21, 28, 35, 42]
+    # The value of the last avaliable column
     topRows = [6, 13, 20, 27, 34, 41, 48]
+    # If rowsAvaliable[0] = topRows[0] the column 0 is full
 
     moves = []
     playedMoves = 0
@@ -22,6 +26,7 @@ class Board:
         self.rows = rows
         self.columns = columns
 
+    # Given a sequence of moves make a board position
     def insertPosition(self, moves):
         player = 0
 
@@ -33,33 +38,46 @@ class Board:
 
         return player
 
+    # Add to the board
     def addChip(self, player, column):
+        # Make the move
         move = int(1 << self.rowsAvaliable[column])
+        # Update last position of the column
         self.rowsAvaliable[column] += 1
 
+        # First move
         if self.bitBoard[player] == None:
             self.bitBoard[player] = move
         else:
+            # XOR the move with the board
             self.bitBoard[player] ^= move
 
         self.moves.append(column)
         self.playedMoves += 1
 
+    # Remove from the board
     def removeChip(self, player, column):
+        # Get the last player column
         column = self.moves.pop()
         self.playedMoves -= 1
 
+        # Update last position of the column
         self.rowsAvaliable[column] -= 1
+        # Make the past move
         move = int(1 << self.rowsAvaliable[column])
 
+        # XOR the move with the board
         self.bitBoard[player] ^= move
 
+    # Check if given column is avaliable
     def isColumnMoveAllowed(self, column):
+        # If rowsAvaliable[0] = topRows[0] the column 0 is full
         if self.rowsAvaliable[column] == self.topRows[column]:
             return False
 
         return True
 
+    # Check if the player won
     def checkObjective(self, player):
         if self.bitBoard[player] == None:
             return
@@ -99,15 +117,19 @@ class Board:
 
         return False
 
+    # If 42 moves are played the game is over
     def isMovesLeft(self):
         return False if self.playedMoves == self.rows * self.columns else True
 
+    # Given a row and column, return the value of the bit in that position
     def bitPosition(self, player, row, column):
         if self.bitBoard[player] == None:
             return
 
+        # Get a string representing the bits
         bitBoardString = self.getBinaryString(player)
 
+        # Model of the grid
         grid = [
             [43, 44, 45, 46, 47, 48],
             [36, 37, 38, 39, 40, 41],
@@ -120,14 +142,17 @@ class Board:
 
         return bitBoardString[grid[column][row]]
 
+    # Get a string representing the bits
     def getBinaryString(self, player, boardSize=49):
         if self.bitBoard[player] != None:
             return format(self.bitBoard[player], "b").zfill(boardSize)
 
+    # Print the board
     def printBitBoard(self, player):
         if self.bitBoard[player] == None:
             return
 
+        # Get a string representing the bits
         bitBoardString = self.getBinaryString(player)
 
         row = self.rows + 1

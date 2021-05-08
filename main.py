@@ -20,22 +20,22 @@ class Game:
     currentPlayer = 0
     moves = []
 
+    # Bit Board
     board = Board(GameConstants.gridHeight, GameConstants.gridWidth)
+    # Separate Transposition Table
     table = [TranspositionTable({}), TranspositionTable({})]
 
     nodeCount = 0
-    move = 0
 
     def __init__(self):
         self.alive = True
-
-        # self.currentPlayer = self.board.insertPosition("3333335444541442")
 
         # Bot as player one
         # Make the first optimal move
         # self.board.addChip(0, 3)
         # self.currentPlayer = 1
 
+    # Return if is a terminal node
     def terminalNode(self, board):
         if (
             board.checkObjective(0)
@@ -46,6 +46,7 @@ class Game:
 
         return False
 
+    # Evaluation function for MiniMax
     def scoreEvaluationMiniMax(self, board):
         # Red Wins
         if board.checkObjective(0):
@@ -57,6 +58,7 @@ class Game:
 
         return 0
 
+    # MiniMax algorithm
     def minimax(self, board, depth, alpha, beta, isMax):
         self.nodeCount += 1
 
@@ -104,20 +106,32 @@ class Game:
 
             return best
 
+    # The score we are using is the number of winning spots the current player has after playing the move.
+    def moveScore(self, board):
+        pass
+
+    # Evaluation function for NegaMax
     def scoreEvaluationNegaMax(self, board, player):
         if board.checkObjective(player):
             return -((self.board.rows * self.board.columns) - self.board.playedMoves)
 
+        # Draw
         return 0
 
+    # NegaMax algorithm
     def negaMax(self, board, depth, alpha, beta, player):
         self.nodeCount += 1
 
+        # Change turn's
         opponent = 1 if player == 0 else 0
-        flag = 1
 
+        # Defines if the score will be an Upper Bound, Lower Bound or an Exact Value
+        flag = 1  # Starts with Upper Bound
+
+        # Lookup to the Table to see if finds this positon on the board
         tableEntry = self.table[opponent].getEntry(board.bitBoard[opponent])
 
+        # If finds an entry and we have searched the tree NOT shallower before, then
         if tableEntry != None and tableEntry["depth"] >= depth:
             if tableEntry["flag"] == 0:
                 return tableEntry["score"]
@@ -128,66 +142,84 @@ class Game:
             if (tableEntry["flag"] == -1) and (tableEntry["score"] >= beta):
                 return beta
 
-        # Draw or there is no moves left
         if depth == 0 or self.terminalNode(board) == True:
+            # Get the evaluation of the board - Win / Loss / Draw
             score = self.scoreEvaluationNegaMax(board, opponent)
 
+            # Add's to the table with a flag Exact
             self.table[opponent].addEntry(board.bitBoard[opponent], score, depth, 0)
 
             return score
 
         # Checking the center columns first
         for column in COLUMN_ORDER:
+            # If the column is avaliable
             if board.isColumnMoveAllowed(column):
+                # Make the move
                 board.addChip(player, column)
 
+                # Call NegaMax for the opponent
                 move = -self.negaMax(board, depth - 1, -beta, -alpha, opponent)
 
+                # Undo the move
                 board.removeChip(player, column)
 
+                # Beta cut-off
                 if move >= beta:
+                    # Add's to the table with a flag Lower Bound
                     self.table[opponent].addEntry(
                         board.bitBoard[opponent], beta, depth, -1
                     )
+
                     return beta
 
+                # If the move is better than alpha(best move) - alpha = max(alpha, move)
                 if move > alpha:
-                    flag = 0
-                    alpha = move
+                    flag = 0  # Change the flag to Exact move
+                    alpha = move  # Setthe new best move
 
+        # At the end, add the best move to the table
         self.table[opponent].addEntry(board.bitBoard[opponent], alpha, depth, flag)
+
+        # Return best move
         return alpha
 
+    # Find the best move
     def laplaceFunction(self):
         player = 1 if self.currentPlayer == 0 else 0
         opponent = self.currentPlayer
 
+        # Start with the worst value for the player
         bestValue = math.inf if player == 1 else -math.inf
+        # Worst move
         bestMove = -1
 
         startTime = time()
         # The row does not matter, because the chip will fall
+
         # Checking the center columns first
         for column in COLUMN_ORDER:
-            # If on that column is a space left
+            # If the column is avaliable
             if self.board.isColumnMoveAllowed(column):
                 # Make the move
                 self.board.addChip(player, column)
 
+                # Call NegaMax for the opponent
                 moveValue = self.negaMax(self.board, 17, -math.inf, math.inf, opponent)
 
-                # moveValue = self.minimax(
-                #     self.board, 3, -math.inf, math.inf, True if player == 1 else False
-                # )
+                # moveValue = self.minimax(self.board, 7, -math.inf, math.inf, True if player == 1 else False)
                 print("Col {}, move [{}]".format(column, moveValue))
 
+                # Undo the move
                 self.board.removeChip(player, column)
 
                 if player == 1:
+                    # The maximizing player wants the highest value
                     if moveValue < bestValue:
                         bestMove = column
                         bestValue = moveValue
                 else:
+                    # The minimizing player wants the lowest value
                     if moveValue > bestValue:
                         bestMove = column
                         bestValue = moveValue
@@ -198,39 +230,55 @@ class Game:
         return bestMove
 
     def update(self):
+        # If nothing change just return
         if not self.moves or not self.alive:
             return
 
+        # Get the position where the player clicked
         row, column = self.moves.pop()
 
+        # If the column is not avaliable just return
         if not self.board.isColumnMoveAllowed(column):
             return
 
-        # Add move
+        # Make the move
         self.board.addChip(self.currentPlayer, column)
 
+        # Sees if current player win's
         if self.board.checkObjective(self.currentPlayer):
+            # Game Over
             self.alive = False
+
             print(
                 "Player {} win's".format("Red" if self.currentPlayer == 0 else "Yellow")
             )
+
             return
 
-        # Bot moves
+        ## Bot moves
         opponent = 1 if self.currentPlayer == 0 else 0
 
+        # Find the best move
         bestMove = self.laplaceFunction()
         print("Best move [{}]".format(bestMove))
         print(self.nodeCount)
 
         self.nodeCount = 0
 
+        # Make the bot move
         self.board.addChip(opponent, bestMove)
+        # Change turn
         self.currentPlayer = opponent
 
+        # Sees if current player win's
         if self.board.checkObjective(self.currentPlayer):
+            # Game Over
             self.alive = False
-            print("Player Yellow win's")
+
+            print(
+                "Player {} win's".format("Red" if self.currentPlayer == 0 else "Yellow")
+            )
+
             return
 
         # Change player
