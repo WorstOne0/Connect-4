@@ -64,20 +64,26 @@ class Game:
 
         # Draw or there is no moves left
         if depth == 0 or self.terminalNode(board) == True:
+            # Return the score
             return self.scoreEvaluationMiniMax(board)
 
         # Red Move
         if isMax:
+            # Worst value for Red
             best = -math.inf
 
             # Checking the center columns first
             for column in COLUMN_ORDER:
+                # If the column is avaliable
                 if board.isColumnMoveAllowed(column):
+                    # Make the move
                     board.addChip(0, column)
 
+                    # Call MiniMax for the opponent
                     move = self.minimax(board, depth - 1, alpha, beta, False)
                     best = max(best, move)
 
+                    # Undo the move
                     board.removeChip(0, column)
 
                     alpha = max(alpha, move)
@@ -92,12 +98,16 @@ class Game:
 
             # Checking the center columns first
             for column in COLUMN_ORDER:
+                # If the column is avaliable
                 if board.isColumnMoveAllowed(column):
+                    # Make the move
                     board.addChip(1, column)
 
+                    # Call MiniMax for the opponent
                     move = self.minimax(board, depth - 1, alpha, beta, True)
                     best = min(best, move)
 
+                    # Undo the move
                     board.removeChip(1, column)
 
                     beta = min(beta, move)
@@ -133,6 +143,7 @@ class Game:
 
         # If finds an entry and we have searched the tree NOT shallower before, then
         if tableEntry != None and tableEntry["depth"] >= depth:
+
             if tableEntry["flag"] == 0:
                 return tableEntry["score"]
 
@@ -176,7 +187,7 @@ class Game:
                 # If the move is better than alpha(best move) - alpha = max(alpha, move)
                 if move > alpha:
                     flag = 0  # Change the flag to Exact move
-                    alpha = move  # Setthe new best move
+                    alpha = move  # Set the new best move
 
         # At the end, add the best move to the table
         self.table[opponent].addEntry(board.bitBoard[opponent], alpha, depth, flag)
@@ -207,7 +218,9 @@ class Game:
                 # Call NegaMax for the opponent
                 moveValue = self.negaMax(self.board, 17, -math.inf, math.inf, opponent)
 
-                # moveValue = self.minimax(self.board, 7, -math.inf, math.inf, True if player == 1 else False)
+                # moveValue = self.minimax(
+                #     self.board, 8, -math.inf, math.inf, True if player == 1 else False
+                # )
                 print("Col {}, move [{}]".format(column, moveValue))
 
                 # Undo the move
