@@ -35,7 +35,7 @@ class Game:
         # self.board.addChip(0, 3)
         # self.currentPlayer = 1
 
-    # Return if is a terminal node
+    # Return True if is a terminal node
     def terminalNode(self, board):
         if (
             board.checkObjective(0)
@@ -116,13 +116,11 @@ class Game:
 
             return best
 
-    # The score we are using is the number of winning spots the current player has after playing the move.
-    def moveScore(self, board):
-        pass
-
     # Evaluation function for NegaMax
     def scoreEvaluationNegaMax(self, board, player):
+        # Check if player won
         if board.checkObjective(player):
+            # Score is based in how many moves the player won
             return -((self.board.rows * self.board.columns) - self.board.playedMoves)
 
         # Draw
@@ -135,6 +133,8 @@ class Game:
         # Change turn's
         opponent = 1 if player == 0 else 0
 
+        # https://web.archive.org/web/20071031100051/http://www.brucemo.com/compchess/programming/hashing.htm
+
         # Defines if the score will be an Upper Bound, Lower Bound or an Exact Value
         flag = 1  # Starts with Upper Bound
 
@@ -143,7 +143,6 @@ class Game:
 
         # If finds an entry and we have searched the tree NOT shallower before, then
         if tableEntry != None and tableEntry["depth"] >= depth:
-
             if tableEntry["flag"] == 0:
                 return tableEntry["score"]
 
@@ -218,9 +217,11 @@ class Game:
                 # Call NegaMax for the opponent
                 moveValue = self.negaMax(self.board, 17, -math.inf, math.inf, opponent)
 
+                # Call MiniMax for the opponent
                 # moveValue = self.minimax(
                 #     self.board, 8, -math.inf, math.inf, True if player == 1 else False
                 # )
+
                 print("Col {}, move [{}]".format(column, moveValue))
 
                 # Undo the move
@@ -268,7 +269,7 @@ class Game:
 
             return
 
-        ## Bot moves
+        # Bot moves
         opponent = 1 if self.currentPlayer == 0 else 0
 
         # Find the best move

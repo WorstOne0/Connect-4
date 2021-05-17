@@ -1,5 +1,7 @@
 import sys
 
+# https://web.archive.org/web/20071031100051/http://www.brucemo.com/compchess/programming/hashing.htm
+
 
 class TranspositionTable:
     # "Hash" Table
